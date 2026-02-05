@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  voxguard-api:
+    build: .
+    container_name: voxguard-api
+    ports:
+      - "8000:8000"
+    environment:
+      - VOXGUARD_API_KEY=${VOXGUARD_API_KEY:-sk_test_123456789}
+      - DEBUG=false
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./models:/app/models:ro
+      - ./logs:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
