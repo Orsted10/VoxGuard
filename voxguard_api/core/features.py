@@ -5,9 +5,12 @@ Handles audio decoding and feature extraction for deepfake detection
 
 import base64
 import io
+import os
+import tempfile
 import numpy as np
 from typing import Tuple, Dict, Any
 import librosa
+import soundfile as sf
 import warnings
 
 from voxguard_api.core.config import (
@@ -41,13 +44,18 @@ def decode_base64_mp3_to_array(audio_base64: str) -> Tuple[np.ndarray, int]:
     except Exception as e:
         raise ValueError(f"Failed to decode Base64 audio: {str(e)}")
     
+    if len(audio_bytes) < 100:
+        raise ValueError("Audio data too small - likely invalid or corrupted")
+    
+    temp_file = None
     try:
-        # Create a file-like object from bytes
-        audio_buffer = io.BytesIO(audio_bytes)
+        # Write to temporary file (librosa needs a real file for MP3)
+        temp_file = tempfile.NamedTemporaryFile(suffix=".mp3", delete=False)
+        temp_file.write(audio_bytes)
+        temp_file.close()
         
-        # Load audio using librosa
-        # mono=True to get single channel, sr=None to preserve original sample rate
-        y, sr = librosa.load(audio_buffer, sr=settings.sample_rate, mono=True)
+        # Load audio using librosa from temp file
+        y, sr = librosa.load(temp_file.name, sr=settings.sample_rate, mono=True)
         
         # Validate audio
         if len(y) == 0:
@@ -76,6 +84,13 @@ def decode_base64_mp3_to_array(audio_base64: str) -> Tuple[np.ndarray, int]:
         raise
     except Exception as e:
         raise ValueError(f"Failed to load audio file: {str(e)}")
+    finally:
+        # Clean up temp file
+        if temp_file and os.path.exists(temp_file.name):
+            try:
+                os.unlink(temp_file.name)
+            except:
+                pass
 
 
 def extract_audio_features(y: np.ndarray, sr: int) -> Dict[str, Any]:
