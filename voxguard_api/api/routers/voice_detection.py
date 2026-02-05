@@ -165,8 +165,6 @@ async def detect_voice(
             explanation=explanation
         )
         
-        )
-        
     except HTTPException:
         raise
     except ValidationError as e:
