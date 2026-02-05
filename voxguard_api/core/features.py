@@ -44,8 +44,8 @@ def decode_base64_mp3_to_array(audio_base64: str) -> Tuple[np.ndarray, int]:
     except Exception as e:
         raise ValueError(f"Failed to decode Base64 audio: {str(e)}")
     
-    if len(audio_bytes) < 100:
-        raise ValueError("Audio data too small - likely invalid or corrupted")
+    if len(audio_bytes) < 10:
+        raise ValueError("Audio data is empty or too small")
     
     temp_file = None
     try:
