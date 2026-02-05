@@ -47,15 +47,16 @@ def decode_base64_mp3_to_array(audio_base64: str) -> Tuple[np.ndarray, int]:
     if len(audio_bytes) < 10:
         raise ValueError("Audio data is empty or too small")
     
-    temp_file = None
+    # Create temp file with .mp3 suffix
+    fd, temp_path = tempfile.mkstemp(suffix=".mp3")
     try:
-        # Write to temporary file (librosa needs a real file for MP3)
-        temp_file = tempfile.NamedTemporaryFile(suffix=".mp3", delete=False)
-        temp_file.write(audio_bytes)
-        temp_file.close()
+        # Write bytes and close descriptor immediately
+        with os.fdopen(fd, 'wb') as tmp:
+            tmp.write(audio_bytes)
         
-        # Load audio using librosa from temp file
-        y, sr = librosa.load(temp_file.name, sr=settings.sample_rate, mono=True)
+        # Load audio using librosa from temp file path
+        # This avoids file locking issues as the file handle is closed
+        y, sr = librosa.load(temp_path, sr=settings.sample_rate, mono=True)
         
         # Validate audio
         if len(y) == 0:
@@ -86,9 +87,9 @@ def decode_base64_mp3_to_array(audio_base64: str) -> Tuple[np.ndarray, int]:
         raise ValueError(f"Failed to load audio file: {str(e)}")
     finally:
         # Clean up temp file
-        if temp_file and os.path.exists(temp_file.name):
+        if os.path.exists(temp_path):
             try:
-                os.unlink(temp_file.name)
+                os.unlink(temp_path)
             except:
                 pass
 

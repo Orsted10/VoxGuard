@@ -165,6 +165,8 @@ async def detect_voice(
             explanation=explanation
         )
         
+        )
+        
     except HTTPException:
         raise
     except ValidationError as e:
@@ -180,3 +182,28 @@ async def detect_voice(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An unexpected error occurred"
         )
+
+
+@router.get(
+    "/voice-detection",
+    summary="Voice Detection Info",
+    description="Information about the voice detection endpoint."
+)
+async def get_voice_detection_info():
+    """
+    Return information about how to use the voice detection endpoint.
+    This handles cases where a user (or tool) sends a GET request instead of POST.
+    """
+    return {
+        "status": "info",
+        "message": "This endpoint requires a POST request with audio data.",
+        "usage": {
+            "method": "POST",
+            "headers": {"x-api-key": "YOUR_API_KEY"},
+            "body": {
+                "language": "Target Language",
+                "audioFormat": "mp3",
+                "audioBase64": "BASE64_ENCODED_STRING"
+            }
+        }
+    }
