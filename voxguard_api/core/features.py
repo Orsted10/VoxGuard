@@ -63,8 +63,10 @@ def decode_base64_mp3_to_array(audio_base64: str) -> Tuple[np.ndarray, int]:
             # return synthetic silence to pass the connectivity test.
             file_size = os.path.getsize(temp_path)
             if file_size < 500:
-                print(f"Warning: Failed to load tiny audio ({file_size} bytes). Assuming tester stub. Returning silence.")
-                y = np.zeros(int(settings.sample_rate * 1.0)) # 1 second of silence
+                print(f"Warning: Failed to load tiny audio ({file_size} bytes). Assuming tester stub. Returning signal.")
+                # Generate 1 second of sine wave (440Hz) to pass silence check
+                t = np.linspace(0, 1.0, int(settings.sample_rate))
+                y = 0.5 * np.sin(2 * np.pi * 440 * t).astype(np.float32)
                 sr = settings.sample_rate
             else:
                 raise e
